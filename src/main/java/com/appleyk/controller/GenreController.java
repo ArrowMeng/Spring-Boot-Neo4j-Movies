@@ -24,7 +24,7 @@ public class GenreController {
 
 	/**
 	 * 根据类型名查询Genre实体
-	 * @param title
+	 * @param name
 	 * @return
 	 */
     @RequestMapping("/get")  

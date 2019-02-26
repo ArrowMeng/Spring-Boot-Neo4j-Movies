@@ -24,7 +24,7 @@ public class PersonController {
 	/**
 	 * 根据演员名查询Person实体
 	 * 
-	 * @param title
+	 * @param name
 	 * @return
 	 */
 	@RequestMapping("/get")
@@ -35,7 +35,7 @@ public class PersonController {
 	/**
 	 * 创建一个演员节点
 	 * 
-	 * @param genre
+	 * @param person
 	 * @return
 	 */
 	@PostMapping("/save")

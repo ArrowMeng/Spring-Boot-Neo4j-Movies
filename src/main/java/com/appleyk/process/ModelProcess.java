@@ -32,32 +32,32 @@ import com.hankcs.hanlp.seg.common.Term;
  */
 public class ModelProcess {
 
-	
+
 	/**
 	 * 分类标签号和问句模板对应表
 	 */
-	Map<Double, String> questionsPattern; 
-	
+	Map<Double, String> questionsPattern;
+
 	/**
 	 * Spark贝叶斯分类器
 	 */
 	NaiveBayesModel nbModel;
-	
+
 	/**
 	 * 词语和下标的对应表   == 词汇表
 	 */
-	Map<String, Integer> vocabulary; 
-	
+	Map<String, Integer> vocabulary;
+
 	/**
 	 * 关键字与其词性的map键值对集合 == 句子抽象
 	 */
 	Map<String, String> abstractMap;
-	
+
 	/**
 	 * 指定问题question及字典的txt模板所在的根目录
 	 */
-    String rootDirPath = "D:/HanLP/data";
-    
+    String rootDirPath = "/Users/mengqiangjun/HanLP/data";
+
     /**
      * 分类模板索引
      */
@@ -67,44 +67,44 @@ public class ModelProcess {
 		questionsPattern = loadQuestionsPattern();
 		vocabulary = loadVocabulary();
 		nbModel = loadClassifierModel();
-	}	
-	
-	
+	}
+
+
 	public ModelProcess(String rootDirPath) throws Exception{
 		this.rootDirPath = rootDirPath+'/';
 		questionsPattern = loadQuestionsPattern();
 		vocabulary = loadVocabulary();
 		nbModel = loadClassifierModel();
 	}
-	
+
 	public ArrayList<String> analyQuery(String queryString) throws Exception {
-		
+
 		/**
 		 * 打印问句
 		 */
 		System.out.println("原始句子："+queryString);
 		System.out.println("========HanLP开始分词========");
-		
+
 		/**
 		 * 抽象句子，利用HanPL分词，将关键字进行词性抽象
 		 */
-		String abstr = queryAbstract(queryString);	
+		String abstr = queryAbstract(queryString);
 		System.out.println("句子抽象化结果："+abstr);// nm 的 导演 是 谁
-		
+
 		/**
 		 * 将抽象的句子与spark训练集中的模板进行匹配，拿到句子对应的模板
 		 */
 		String strPatt = queryClassify(abstr);
 		System.out.println("句子套用模板结果："+strPatt); // nm 制作 导演列表
-		
-		
+
+
 		/**
 		 * 模板还原成句子，此时问题已转换为我们熟悉的操作
 		 */
 		String finalPattern = queryExtenstion(strPatt);
 		System.out.println("原始句子替换成系统可识别的结果："+finalPattern);// 但丁密码 制作 导演列表
-		
-		
+
+
 		ArrayList<String> resultList = new ArrayList<String>();
 		resultList.add(String.valueOf(modelIndex));
 		String[] finalPattArray = finalPattern.split(" ");
@@ -114,9 +114,9 @@ public class ModelProcess {
 	}
 
 	public  String queryAbstract(String querySentence) {
-											
+
 		// 句子抽象化
-		Segment segment = HanLP.newSegment().enableCustomDictionary(true);							
+		Segment segment = HanLP.newSegment().enableCustomDictionary(true);
 		List<Term> terms = segment.seg(querySentence);
 		String abstractQuery = "";
 		abstractMap = new HashMap<String, String>();
@@ -142,7 +142,7 @@ public class ModelProcess {
 			} else if (termStr.contains("ng")) { //ng 类型
 				abstractQuery += "ng ";
 				abstractMap.put("ng", word);
-			} 	
+			}
 			else {
 				abstractQuery += word + " ";
 			}
@@ -159,9 +159,9 @@ public class ModelProcess {
 			 * 如果句子模板中含有抽象的词性
 			 */
 			if (queryPattern.contains(key)) {
-				
+
 				/**
-				 * 则替换抽象词性为具体的值 
+				 * 则替换抽象词性为具体的值
 				 */
 				String value = abstractMap.get(key);
 				queryPattern = queryPattern.replace(key, value);
@@ -176,7 +176,7 @@ public class ModelProcess {
 		return extendedQuery;
 	}
 
-	
+
 	/**
 	 * 加载词汇表 == 关键特征 == 与HanLP分词后的单词进行匹配
 	 * @return
@@ -237,7 +237,7 @@ public class ModelProcess {
 	 * @throws Exception
 	 */
 	public  double[] sentenceToArrays(String sentence) throws Exception {
-		
+
 		double[] vector = new double[vocabulary.size()];
 		/**
 		 * 模板对照词汇表的大小进行初始化，全部为0.0
@@ -245,7 +245,7 @@ public class ModelProcess {
 		for (int i = 0; i < vocabulary.size(); i++) {
 			vector[i] = 0;
 		}
-		
+
 		/**
 		 * HanLP分词，拿分词的结果和词汇表里面的关键特征进行匹配
 		 */
@@ -272,7 +272,7 @@ public class ModelProcess {
 	 * @throws Exception
 	 */
 	public  NaiveBayesModel loadClassifierModel() throws Exception {
-		
+
 			/**
 			 * 生成Spark对象
 			 * 一、Spark程序是通过SparkContext发布到Spark集群的
@@ -280,14 +280,14 @@ public class ModelProcess {
 			 * Spark程序的结束是以SparkContext结束作为结束
 			 * JavaSparkContext对象用来创建Spark的核心RDD的
 			 * 注意：第一个RDD,一定是由SparkContext来创建的
-			 * 
+			 *
 			 * 二、SparkContext的主构造器参数为 SparkConf
 			 * SparkConf必须设置appname和master，否则会报错
-			 * spark.master   用于设置部署模式   
+			 * spark.master   用于设置部署模式
 			 * local[*] == 本地运行模式[也可以是集群的形式]，如果需要多个线程执行，可以设置为local[2],表示2个线程 ，*表示多个
-			 * spark.app.name 用于指定应用的程序名称  == 
+			 * spark.app.name 用于指定应用的程序名称  ==
 			 */
-		
+
 		    /**
 		     * 题外话
 		     * 贝叶斯是谁？
@@ -308,7 +308,7 @@ public class ModelProcess {
 			 */
 			List<LabeledPoint> train_list = new LinkedList<LabeledPoint>();
 			String[] sentences = null;
-			
+
 
 			/**
 			 * 英雄的评分是多少
@@ -389,8 +389,8 @@ public class ModelProcess {
 				LabeledPoint train_one = new LabeledPoint(6.0, Vectors.dense(array));
 				train_list.add(train_one);
 			}
-			
-			
+
+
 			/**
 			 * 周星驰演了哪些电影
 			 */
@@ -401,7 +401,7 @@ public class ModelProcess {
 				LabeledPoint train_one = new LabeledPoint(7.0, Vectors.dense(array));
 				train_list.add(train_one);
 			}
-			
+
 			/**
 			 * 巩俐参演的电影评分在8.5分以上的有哪些、巩俐参演的电影评分大于8.5分的有哪些
 			 */
@@ -413,7 +413,7 @@ public class ModelProcess {
 				train_list.add(train_one);
 			}
 
-			
+
 			/**
 			 * 巩俐参演的电影评分在8.5分以下的有哪些、巩俐参演的电影评分小于8.5分的有哪些
 			 */
@@ -424,8 +424,8 @@ public class ModelProcess {
 				LabeledPoint train_one = new LabeledPoint(9.0, Vectors.dense(array));
 				train_list.add(train_one);
 			}
-				
-			
+
+
 			/**
 			 * 章子怡演过哪些类型的电影
 			 */
@@ -436,7 +436,7 @@ public class ModelProcess {
 				LabeledPoint train_one = new LabeledPoint(10.0, Vectors.dense(array));
 				train_list.add(train_one);
 			}
-			
+
 			/**
 			 * 章子怡与李连杰合作过哪些电影、章子怡和巩俐一起演过什么电影
 			 */
@@ -447,8 +447,8 @@ public class ModelProcess {
 				LabeledPoint train_one = new LabeledPoint(11.0, Vectors.dense(array));
 				train_list.add(train_one);
 			}
-			
-			
+
+
 			/**
 			 * 章子怡与李连杰合作过哪些电影、章子怡和巩俐一起演过什么电影
 			 */
@@ -459,19 +459,19 @@ public class ModelProcess {
 				LabeledPoint train_one = new LabeledPoint(12.0, Vectors.dense(array));
 				train_list.add(train_one);
 			}
-			
-			
+
+
 			/**
 			 * 章子怡的生日是多少、章子怡的出生日期是什么时候
 			 */
 			String actorBirthdayQuestion = loadFile("question/【13】演员出生日期.txt");
 			sentences = actorBirthdayQuestion.split("`");
 			for (String sentence : sentences) {
-				double[] array = sentenceToArrays(sentence);				
+				double[] array = sentenceToArrays(sentence);
 				LabeledPoint train_one = new LabeledPoint(13.0, Vectors.dense(array));
 				train_list.add(train_one);
 			}
-			
+
 			/**
 			 * SPARK的核心是RDD(弹性分布式数据集)
 			 * Spark是Scala写的,JavaRDD就是Spark为Java写的一套API
@@ -480,17 +480,17 @@ public class ModelProcess {
 			 */
 			JavaRDD<LabeledPoint> trainingRDD = sc.parallelize(train_list);
 			NaiveBayesModel nb_model = NaiveBayes.train(trainingRDD.rdd());
-			
+
 			/**
 			 * 记得关闭资源
 			 */
 			sc.close();
-			
+
 			/**
 			 * 返回贝叶斯分类器
 			 */
-			return nb_model;		
-		
+			return nb_model;
+
 	}
 
 	/**
@@ -529,10 +529,10 @@ public class ModelProcess {
 	 * @throws Exception
 	 */
 	public  String queryClassify(String sentence) throws Exception {
-		
+
 		double[] testArray = sentenceToArrays(sentence);
 		Vector v = Vectors.dense(testArray);
-		
+
 		/**
 		 * 对数据进行预测predict
 		 * 句子模板在 spark贝叶斯分类器中的索引【位置】
@@ -540,7 +540,7 @@ public class ModelProcess {
 		 */
 		double index = nbModel.predict(v);
 		modelIndex = (int)index;
-		System.out.println("the model index is " + index);	
+		System.out.println("the model index is " + index);
 //		Vector vRes = nbModel.predictProbabilities(v);
 //		System.out.println("问题模板分类【0】概率："+vRes.toArray()[0]);
 //		System.out.println("问题模板分类【13】概率："+vRes.toArray()[13]);

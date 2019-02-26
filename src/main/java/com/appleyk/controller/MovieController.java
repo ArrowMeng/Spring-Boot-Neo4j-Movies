@@ -34,7 +34,7 @@ public class MovieController {
       
     /**
      * 创建一个电影节点
-     * @param genre
+     * @param movie
      * @return
      */
     @PostMapping("/save")  
